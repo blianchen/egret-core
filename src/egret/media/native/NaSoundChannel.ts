@@ -1,6 +1,6 @@
 //////////////////////////////////////////////////////////////////////////////////////
 //
-//  Copyright (c) 2014-2015, Egret Technology Inc.
+//  Copyright (c) 2014-present, Egret Technology.
 //  All rights reserved.
 //  Redistribution and use in source and binary forms, with or without
 //  modification, are permitted provided that the following conditions are met:
@@ -27,7 +27,7 @@
 //
 //////////////////////////////////////////////////////////////////////////////////////
 
-module egret.native {
+namespace egret.native {
 
     /**
      * @private
@@ -81,6 +81,9 @@ module egret.native {
          * @inheritDoc
          */
         public stop() {
+            if (!this.isStopped) {
+                sys.$popSoundChannel(this);
+            }
             this.isStopped = true;
             if (this.$type == egret.Sound.EFFECT) {
                 if (this._effectId) {
@@ -93,6 +96,7 @@ module egret.native {
                     egret_native.Audio.stopBackgroundMusic(false);
                 }
             }
+
         }
 
         /**

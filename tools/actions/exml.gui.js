@@ -1,6 +1,6 @@
 /// <reference path="../lib/types.d.ts" />
-var file = require('../lib/FileUtil');
-var exmlc = require('../lib/exml/exmlc');
+var file = require("../lib/FileUtil");
+var exmlc = require("../lib/exml/exmlc");
 function beforeBuild() {
     //todo move to upgrade
     var oldPath = file.joinPath(egret.args.srcDir, "libs", "exml.g.d.ts");
@@ -43,6 +43,13 @@ function buildChanges(exmls) {
     if (!exmls || exmls.length == 0) {
         return state;
     }
+    //删除exml编译的ts文件, 防止上一次的 publish 过程中断出错
+    exmls.forEach(function (exml) {
+        if (!file.exists(exml))
+            return;
+        var tsPath = exml.substring(0, exml.length - 4) + "g.ts";
+        file.remove(tsPath);
+    });
     exmls.forEach(function (exml) {
         if (!file.exists(exml))
             return;
@@ -85,6 +92,10 @@ function afterBuildChanges(exmlsChanged) {
     generateExmlDTS();
 }
 exports.afterBuildChanges = afterBuildChanges;
+function updateSetting(merge) {
+    if (merge === void 0) { merge = false; }
+}
+exports.updateSetting = updateSetting;
 function generateExmlDTS() {
     var srcPath = egret.args.srcDir;
     var projectPath = egret.args.projectDir;
@@ -121,5 +132,3 @@ function generateExmlDTS() {
 function getExmlDtsPath() {
     return file.joinPath(egret.args.projectDir, "libs", "exml.g.d.ts");
 }
-
-//# sourceMappingURL=exml.gui.js.map

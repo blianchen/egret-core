@@ -1,6 +1,6 @@
 //////////////////////////////////////////////////////////////////////////////////////
 //
-//  Copyright (c) 2014-2015, Egret Technology Inc.
+//  Copyright (c) 2014-present, Egret Technology.
 //  All rights reserved.
 //  Redistribution and use in source and binary forms, with or without
 //  modification, are permitted provided that the following conditions are met:
@@ -27,9 +27,9 @@
 //
 //////////////////////////////////////////////////////////////////////////////////////
 
-module egret.sys {
+namespace egret.sys {
 
-    var regionPool:Region[] = [];
+    let regionPool:Region[] = [];
 
     /**
      * @private
@@ -51,7 +51,7 @@ module egret.sys {
          * 使用完后调用对应的release()静态方法回收对象，能有效减少对象创建数量造成的性能开销。
          */
         public static create():Region {
-            var region = regionPool.pop();
+            let region = regionPool.pop();
             if (!region) {
                 region = new Region();
             }
@@ -104,6 +104,17 @@ module egret.sys {
             this.maxY = maxY;
             this.updateArea();
             return this;
+        }
+        /**
+         * @private
+         * 把所有值都取整
+         */
+        public intValues(){
+            this.minX = Math.floor(this.minX);
+            this.minY = Math.floor(this.minY);
+            this.maxX = Math.ceil(this.maxX);
+            this.maxY = Math.ceil(this.maxY);
+            this.updateArea();
         }
 
         /**
@@ -192,8 +203,8 @@ module egret.sys {
             if(this.isEmpty()) {
                 return false;
             }
-            var max = this.minX > target.minX ? this.minX : target.minX;
-            var min = this.maxX < target.maxX ? this.maxX : target.maxX;
+            let max = this.minX > target.minX ? this.minX : target.minX;
+            let min = this.maxX < target.maxX ? this.maxX : target.maxX;
             if (max > min) {
                 return false;
             }
@@ -207,41 +218,41 @@ module egret.sys {
          * @private
          */
         public updateRegion(bounds:Rectangle, matrix:Matrix):void {
-            //if(bounds.width == 0 || bounds.height == 0) {
-            //    //todo 理论上应该是空
-            //    this.setEmpty();
-            //    return;
-            //}
-            var m = matrix;
-            var a = m.a;
-            var b = m.b;
-            var c = m.c;
-            var d = m.d;
-            var tx = m.tx;
-            var ty = m.ty;
-            var x = bounds.x;
-            var y = bounds.y;
-            var xMax = x + bounds.width;
-            var yMax = y + bounds.height;
-            var minX:number, minY:number, maxX:number, maxY:number;
+            if(bounds.width == 0 || bounds.height == 0) {
+                //todo 理论上应该是空
+                this.setEmpty();
+                return;
+            }
+            let m = matrix;
+            let a = m.a;
+            let b = m.b;
+            let c = m.c;
+            let d = m.d;
+            let tx = m.tx;
+            let ty = m.ty;
+            let x = bounds.x;
+            let y = bounds.y;
+            let xMax = x + bounds.width;
+            let yMax = y + bounds.height;
+            let minX:number, minY:number, maxX:number, maxY:number;
             //优化，通常情况下不缩放旋转的对象占多数，直接加上偏移量即可。
             if (a == 1.0 && b == 0.0 && c == 0.0 && d == 1.0) {
-                minX = Math.floor(x + tx) - 1;
-                minY = Math.floor(y + ty) - 1;
-                maxX = Math.ceil(xMax + tx) + 1;
-                maxY = Math.ceil(yMax + ty) + 1;
+                minX = x + tx - 1;
+                minY = y + ty - 1;
+                maxX = xMax + tx + 1;
+                maxY = yMax + ty + 1;
             }
             else {
-                var x0 = a * x + c * y + tx;
-                var y0 = b * x + d * y + ty;
-                var x1 = a * xMax + c * y + tx;
-                var y1 = b * xMax + d * y + ty;
-                var x2 = a * xMax + c * yMax + tx;
-                var y2 = b * xMax + d * yMax + ty;
-                var x3 = a * x + c * yMax + tx;
-                var y3 = b * x + d * yMax + ty;
+                let x0 = a * x + c * y + tx;
+                let y0 = b * x + d * y + ty;
+                let x1 = a * xMax + c * y + tx;
+                let y1 = b * xMax + d * y + ty;
+                let x2 = a * xMax + c * yMax + tx;
+                let y2 = b * xMax + d * yMax + ty;
+                let x3 = a * x + c * yMax + tx;
+                let y3 = b * x + d * yMax + ty;
 
-                var tmp = 0;
+                let tmp = 0;
 
                 if (x0 > x1) {
                     tmp = x0;
@@ -254,8 +265,8 @@ module egret.sys {
                     x3 = tmp;
                 }
 
-                minX = Math.floor(x0 < x2 ? x0 : x2) - 1;
-                maxX = Math.ceil(x1 > x3 ? x1 : x3) + 1;
+                minX = (x0 < x2 ? x0 : x2) - 1;
+                maxX = (x1 > x3 ? x1 : x3) + 1;
 
                 if (y0 > y1) {
                     tmp = y0;
@@ -268,8 +279,8 @@ module egret.sys {
                     y3 = tmp;
                 }
 
-                minY = Math.floor(y0 < y2 ? y0 : y2) - 1;
-                maxY = Math.ceil(y1 > y3 ? y1 : y3) + 1;
+                minY = (y0 < y2 ? y0 : y2) - 1;
+                maxY = (y1 > y3 ? y1 : y3) + 1;
             }
             this.minX = minX;
             this.minY = minY;

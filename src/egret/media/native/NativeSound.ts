@@ -1,6 +1,6 @@
 //////////////////////////////////////////////////////////////////////////////////////
 //
-//  Copyright (c) 2014-2015, Egret Technology Inc.
+//  Copyright (c) 2014-present, Egret Technology.
 //  All rights reserved.
 //  Redistribution and use in source and binary forms, with or without
 //  modification, are permitted provided that the following conditions are met:
@@ -27,7 +27,7 @@
 //
 //////////////////////////////////////////////////////////////////////////////////////
 
-module egret.native {
+namespace egret.native {
 
     /**
      * @private
@@ -35,30 +35,30 @@ module egret.native {
      */
     export class NativeSound extends egret.EventDispatcher implements egret.Sound {
         /**
-         * @language en_US
          * Background music
          * @version Egret 2.4
          * @platform Web,Native
+         * @language en_US
          */
         /**
-         * @language zh_CN
          * 背景音乐
          * @version Egret 2.4
          * @platform Web,Native
+         * @language zh_CN
          */
         public static MUSIC:string = "music";
 
         /**
-         * @language en_US
          * EFFECT
          * @version Egret 2.4
          * @platform Web,Native
+         * @language en_US
          */
         /**
-         * @language zh_CN
          * 音效
          * @version Egret 2.4
          * @platform Web,Native
+         * @language zh_CN
          */
         public static EFFECT:string = "effect";
 
@@ -88,11 +88,21 @@ module egret.native {
             super();
         }
 
+        public get length():number {
+            if (this.originAudio) {
+                return this.originAudio.duration;
+            }
+
+            throw new Error ("sound not loaded!");
+
+            //return 0;
+        }
+
         /**
          * @inheritDoc
          */
         public load(url:string):void {
-            var self = this;
+            let self = this;
 
             this.url = url;
 
@@ -100,28 +110,30 @@ module egret.native {
                 egret.$error(3002);
             }
 
+            let audio = new Audio(url);
+            audio.addEventListener("canplaythrough", onCanPlay);
+            audio.addEventListener("error", onAudioError);
+            this.originAudio = audio;
+
             if (!egret_native.isFileExists(url)) {
                 download();
             }
             else {
-                $callAsync(onAudioLoaded, self);
+                onAudioLoaded();
             }
 
             function download() {
-                var promise = PromiseObject.create();
+                let promise = PromiseObject.create();
                 promise.onSuccessFunc = onAudioLoaded;
                 promise.onErrorFunc = onAudioError;
                 egret_native.download(url, url, promise);
             }
-
-            var audio = new Audio(url);
-            audio.addEventListener("canplaythrough", onCanPlay);
-            audio.addEventListener("error", onAudioError);
-            this.originAudio = audio;
             function onAudioLoaded():void {
                 audio.load();
-
-                NativeSound.$recycle(this.url, audio);
+                if(NativeSound.clearAudios[this.url]) {
+                    delete NativeSound.clearAudios[this.url];
+                }
+                NativeSound.$recycle(url, audio);
             }
 
             function onCanPlay():void {
@@ -151,10 +163,10 @@ module egret.native {
             loops = +loops || 0;
 
             if (DEBUG && this.loaded == false) {
-                egret.$error(3001);
+                egret.$error(1049);
             }
 
-            var audio = NativeSound.$pop(this.url);
+            let audio = NativeSound.$pop(this.url);
             if (audio == null) {
                 audio = new Audio(this.url);
             }
@@ -163,11 +175,14 @@ module egret.native {
             }
             audio.autoplay = true;
 
-            var channel = new NativeSoundChannel(audio);
+            let channel = new NativeSoundChannel(audio);
             channel.$url = this.url;
             channel.$loops = loops;
             channel.$startTime = startTime;
             channel.$play();
+
+            sys.$pushSoundChannel(channel);
+
             return channel;
         }
 
@@ -186,16 +201,18 @@ module egret.native {
          * @private
          */
         private static audios:Object = {};
+        private static clearAudios:Object = {};
 
         static $clear(url:string):void {
-            var array:HTMLAudioElement[] = NativeSound.audios[url];
+            NativeSound.clearAudios[url] = true;
+            let array:HTMLAudioElement[] = NativeSound.audios[url];
             if (array) {
                 array.length = 0;
             }
         }
 
         static $pop(url:string):HTMLAudioElement {
-            var array:HTMLAudioElement[] = NativeSound.audios[url];
+            let array:HTMLAudioElement[] = NativeSound.audios[url];
             if (array && array.length > 0) {
                 return array.pop();
             }
@@ -203,7 +220,10 @@ module egret.native {
         }
 
         static $recycle(url:string, audio:HTMLAudioElement):void {
-            var array:HTMLAudioElement[] = NativeSound.audios[url];
+            if(NativeSound.clearAudios[url]) {
+                return;
+            }
+            let array:HTMLAudioElement[] = NativeSound.audios[url];
             if (NativeSound.audios[url] == null) {
                 array = NativeSound.audios[url] = [];
             }

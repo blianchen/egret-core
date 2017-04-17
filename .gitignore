@@ -31,5 +31,9 @@ npm-debug.log
 src/tsc_config_temp.txt
 /bin
 /tsconfig.json
-/egret
-/EgretEngine
+/index.html
+/src/tests
+
+.wing/settings.json
+/built
+/tests

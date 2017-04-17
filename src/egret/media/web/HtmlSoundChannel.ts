@@ -1,6 +1,6 @@
 //////////////////////////////////////////////////////////////////////////////////////
 //
-//  Copyright (c) 2014-2015, Egret Technology Inc.
+//  Copyright (c) 2014-present, Egret Technology.
 //  All rights reserved.
 //  Redistribution and use in source and binary forms, with or without
 //  modification, are permitted provided that the following conditions are met:
@@ -27,7 +27,7 @@
 //
 //////////////////////////////////////////////////////////////////////////////////////
 
-module egret.web {
+namespace egret.web {
 
     /**
      * @private
@@ -65,6 +65,19 @@ module egret.web {
             this.audio = audio;
         }
 
+        private canPlay =():void => {
+            this.audio.removeEventListener("canplay", this.canPlay);
+
+            try {
+                this.audio.currentTime = this.$startTime;
+            }
+            catch (e) {
+            }
+            finally {
+                this.audio.play();
+            }
+        };
+
         $play():void {
             if (this.isStopped) {
                 egret.$error(1036);
@@ -72,14 +85,15 @@ module egret.web {
             }
 
             try {
+                //this.audio.pause();
+                this.audio.volume = this._volume;
                 this.audio.currentTime = this.$startTime;
             }
             catch (e) {
-
+                this.audio.addEventListener("canplay", this.canPlay);
+                return;
             }
-            finally {
-                this.audio.play();
-            }
+            this.audio.play();
         }
 
         /**
@@ -98,7 +112,7 @@ module egret.web {
             }
 
             /////////////
-            this.audio.load();
+            //this.audio.load();
             this.$play();
         };
 
@@ -109,22 +123,38 @@ module egret.web {
         public stop() {
             if (!this.audio)
                 return;
-            var audio = this.audio;
-            audio.pause();
+
+            if (!this.isStopped) {
+                sys.$popSoundChannel(this);
+            }
+            this.isStopped = true;
+
+            let audio = this.audio;
             audio.removeEventListener("ended", this.onPlayEnd);
+            audio.volume = 0;
+            this._volume = 0;
             this.audio = null;
 
-            HtmlSound.$recycle(this.$url, audio);
+            let url = this.$url;
+
+            //延迟一定时间再停止，规避chrome报错
+            window.setTimeout(function () {
+                audio.pause();
+                HtmlSound.$recycle(url, audio);
+            }, 200);
         }
+
+        /**
+         * @private
+         */
+        private _volume:number = 1;
 
         /**
          * @private
          * @inheritDoc
          */
         public get volume():number {
-            if (!this.audio)
-                return 1;
-            return this.audio.volume;
+            return this._volume;
         }
 
         /**
@@ -135,7 +165,7 @@ module egret.web {
                 egret.$error(1036);
                 return;
             }
-
+            this._volume = value;
             if (!this.audio)
                 return;
             this.audio.volume = value;

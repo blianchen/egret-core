@@ -1,6 +1,6 @@
 //////////////////////////////////////////////////////////////////////////////////////
 //
-//  Copyright (c) 2014-2015, Egret Technology Inc.
+//  Copyright (c) 2014-present, Egret Technology.
 //  All rights reserved.
 //  Redistribution and use in source and binary forms, with or without
 //  modification, are permitted provided that the following conditions are met:
@@ -26,7 +26,7 @@
 //  EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //
 //////////////////////////////////////////////////////////////////////////////////////
-module egret {
+namespace egret {
     /**
      * @private
      * @version Egret 2.4
@@ -37,6 +37,11 @@ module egret {
          * @private
          */
         private stageText:egret.StageText;
+
+        /**
+         * @private
+         */
+        private stageTextAdded:boolean = false;
 
         /**
          * @private
@@ -72,9 +77,14 @@ module egret {
          * 
          */
         public _addStageText():void {
+            if(this.stageTextAdded) {
+                return;
+            }
             if (!this._text.$inputEnabled) {
                 this._text.$touchEnabled = true;
             }
+
+            this.tempStage = this._text.stage;
 
             this.stageText.$addToStage();
 
@@ -83,6 +93,8 @@ module egret {
 
             this.stageText.addEventListener("blur", this.blurHandler, this);
             this.stageText.addEventListener("focus", this.focusHandler, this);
+
+            this.stageTextAdded = true;
         }
 
         /**
@@ -90,6 +102,9 @@ module egret {
          * 
          */
         public _removeStageText():void {
+            if(!this.stageTextAdded) {
+                return;
+            }
             if (!this._text.$inputEnabled) {
                 this._text.$touchEnabled = false;
             }
@@ -98,10 +113,12 @@ module egret {
 
             this.stageText.removeEventListener("updateText", this.updateTextHandler, this);
             this._text.removeEventListener(egret.TouchEvent.TOUCH_BEGIN, this.onMouseDownHandler, this);
-            this._text.stage.removeEventListener(egret.TouchEvent.TOUCH_BEGIN, this.onStageDownHandler, this);
+            this.tempStage.removeEventListener(egret.TouchEvent.TOUCH_BEGIN, this.onStageDownHandler, this);
 
             this.stageText.removeEventListener("blur", this.blurHandler, this);
             this.stageText.removeEventListener("focus", this.focusHandler, this);
+
+            this.stageTextAdded = false;
         }
 
         /**
@@ -155,7 +172,7 @@ module egret {
             if (this._isFocus) {
                 //不再显示竖线，并且输入框显示最开始
                 this._isFocus = false;
-                this._text.stage.removeEventListener(egret.TouchEvent.TOUCH_BEGIN, this.onStageDownHandler, this);
+                this.tempStage.removeEventListener(egret.TouchEvent.TOUCH_BEGIN, this.onStageDownHandler, this);
 
                 this._text.$isTyping = false;
                 this._text.$invalidateContentBounds();
@@ -167,11 +184,14 @@ module egret {
             }
         }
 
+        private tempStage:egret.Stage;
         //点中文本
         private onMouseDownHandler(event:TouchEvent) {
-            event.stopPropagation();
-
-            var self = this;
+            this.$onFocus();
+        }
+        
+        $onFocus():void {
+            let self = this;
             if (!this._text.visible) {
                 return;
             }
@@ -179,15 +199,18 @@ module egret {
             if (this._isFocus) {
                 return;
             }
-            this._text.stage.addEventListener(egret.TouchEvent.TOUCH_BEGIN, this.onStageDownHandler, this);
+
+            this.tempStage.addEventListener(egret.TouchEvent.TOUCH_BEGIN, this.onStageDownHandler, this);
 
             //强制更新输入框位置
             this.stageText.$show();
         }
-
+        
         //未点中文本
         private onStageDownHandler(event:TouchEvent) {
-            this.stageText.$hide();
+            if(event.$target != this._text) {
+                this.stageText.$hide();
+            }
         }
 
         /**
@@ -196,12 +219,14 @@ module egret {
          * @param event 
          */
         private updateTextHandler(event:Event):void {
-            var values = this._text.$TextField;
-            var textValue = this.stageText.$getText();
-            var isChanged:boolean = false;
+            let values = this._text.$TextField;
+            let textValue = this.stageText.$getText();
+            let isChanged:boolean = false;
+            let reg: RegExp;
+            let result: string[];
             if (values[sys.TextKeys.restrictAnd] != null) {//内匹配
-                var reg = new RegExp("[" + values[sys.TextKeys.restrictAnd] + "]", "g");
-                var result = textValue.match(reg);
+                reg = new RegExp("[" + values[sys.TextKeys.restrictAnd] + "]", "g");
+                result = textValue.match(reg);
                 if (result) {
                     textValue = result.join("");
                 }
@@ -269,12 +294,12 @@ module egret {
                 return;
             }
 
-            var stage:egret.Stage = this._text.$stage;
+            let stage:egret.Stage = this._text.$stage;
             if (stage == null) {
             }
             else {
-                var item:DisplayObject = this._text;
-                var visible:boolean = item.$visible;
+                let item:DisplayObject = this._text;
+                let visible:boolean = item.$visible;
                 while (true) {
                     if (!visible) {
                         break;

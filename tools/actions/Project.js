@@ -7,9 +7,8 @@ function normalize(project) {
     project.scaleMode = project.scaleMode || "showAll";
     project.orientationMode = project.orientationMode || "auto";
     project.frameRate = project.frameRate || 30;
-    project.contentWidth = project.contentWidth || 480;
-    project.contentHeight = project.contentHeight || 800;
-    project.moduleScripts = project.moduleScripts || [];
+    project.contentWidth = project.contentWidth || 640;
+    project.contentHeight = project.contentHeight || 1136;
     project.showLog = project.showLog || false;
     project.logFilter = project.logFilter || "";
     project.maxTouches = project.maxTouches || 2;
@@ -58,8 +57,8 @@ function getLibsList(html, isNative, isDebug) {
     }
 }
 exports.getLibsList = getLibsList;
-var doT = require('../lib/doT');
-var FileUtil = require('../lib/FileUtil');
+var doT = require("../lib/doT");
+var FileUtil = require("../lib/FileUtil");
 function getNativeProjectInfo(html) {
     if (!FileUtil.exists(html))
         return;
@@ -139,5 +138,3 @@ function parseProjectInfo(html) {
     }
 }
 exports.parseProjectInfo = parseProjectInfo;
-
-//# sourceMappingURL=Project.js.map

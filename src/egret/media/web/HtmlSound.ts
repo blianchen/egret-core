@@ -1,6 +1,6 @@
 //////////////////////////////////////////////////////////////////////////////////////
 //
-//  Copyright (c) 2014-2015, Egret Technology Inc.
+//  Copyright (c) 2014-present, Egret Technology.
 //  All rights reserved.
 //  Redistribution and use in source and binary forms, with or without
 //  modification, are permitted provided that the following conditions are met:
@@ -27,7 +27,7 @@
 //
 //////////////////////////////////////////////////////////////////////////////////////
 
-module egret.web {
+namespace egret.web {
 
     /**
      * @private
@@ -35,30 +35,30 @@ module egret.web {
      */
     export class HtmlSound extends egret.EventDispatcher implements egret.Sound {
         /**
-         * @language en_US
          * Background music
          * @version Egret 2.4
          * @platform Web,Native
+         * @language en_US
          */
         /**
-         * @language zh_CN
          * 背景音乐
          * @version Egret 2.4
          * @platform Web,Native
+         * @language zh_CN
          */
         public static MUSIC:string = "music";
 
         /**
-         * @language en_US
          * EFFECT
          * @version Egret 2.4
          * @platform Web,Native
+         * @language en_US
          */
         /**
-         * @language zh_CN
          * 音效
          * @version Egret 2.4
          * @platform Web,Native
+         * @language zh_CN
          */
         public static EFFECT:string = "effect";
 
@@ -88,26 +88,50 @@ module egret.web {
             super();
         }
 
+        public get length():number {
+            if (this.originAudio) {
+                return this.originAudio.duration;
+            }
+
+            throw new Error ("sound not loaded!");
+
+            //return 0;
+        }
+
         /**
          * @inheritDoc
          */
         public load(url:string):void {
-            var self = this;
+            let self = this;
 
             this.url = url;
 
             if (DEBUG && !url) {
                 egret.$error(3002);
             }
-            var audio = new Audio(url);
+            let audio = new Audio(url);
             audio.addEventListener("canplaythrough", onAudioLoaded);
             audio.addEventListener("error", onAudioError);
+
+            let ua:string = navigator.userAgent.toLowerCase();
+            if (ua.indexOf("firefox") >= 0) {//火狐兼容
+                audio.autoplay = !0;
+                audio.muted = true;
+            }
+
             audio.load();
             this.originAudio = audio;
+            if(HtmlSound.clearAudios[this.url]) {
+                delete HtmlSound.clearAudios[this.url];
+            }
             HtmlSound.$recycle(this.url, audio);
 
             function onAudioLoaded():void {
                 removeListeners();
+                if (ua.indexOf("firefox") >= 0) {//火狐兼容
+                    audio.pause();
+                    audio.muted = false;
+                }
 
                 self.loaded = true;
                 self.dispatchEventWith(egret.Event.COMPLETE);
@@ -133,23 +157,26 @@ module egret.web {
             loops = +loops || 0;
 
             if (DEBUG && this.loaded == false) {
-                egret.$error(3001);
+                egret.$error(1049);
             }
 
-            var audio = HtmlSound.$pop(this.url);
+            let audio = HtmlSound.$pop(this.url);
             if (audio == null) {
                 audio = <HTMLAudioElement>this.originAudio.cloneNode();
             }
             else {
-                audio.load();
+                //audio.load();
             }
             audio.autoplay = true;
 
-            var channel = new HtmlSoundChannel(audio);
+            let channel = new HtmlSoundChannel(audio);
             channel.$url = this.url;
             channel.$loops = loops;
             channel.$startTime = startTime;
             channel.$play();
+
+            sys.$pushSoundChannel(channel);
+
             return channel;
         }
 
@@ -168,16 +195,18 @@ module egret.web {
          * @private
          */
         private static audios:Object = {};
+        private static clearAudios:Object = {};
 
         static $clear(url:string):void {
-            var array:HTMLAudioElement[] = HtmlSound.audios[url];
+            HtmlSound.clearAudios[url] = true;
+            let array:HTMLAudioElement[] = HtmlSound.audios[url];
             if (array) {
                 array.length = 0;
             }
         }
 
         static $pop(url:string):HTMLAudioElement {
-            var array:HTMLAudioElement[] = HtmlSound.audios[url];
+            let array:HTMLAudioElement[] = HtmlSound.audios[url];
             if (array && array.length > 0) {
                 return array.pop();
             }
@@ -185,7 +214,10 @@ module egret.web {
         }
 
         static $recycle(url:string, audio:HTMLAudioElement):void {
-            var array:HTMLAudioElement[] = HtmlSound.audios[url];
+            if(HtmlSound.clearAudios[url]) {
+                return;
+            }
+            let array:HTMLAudioElement[] = HtmlSound.audios[url];
             if (HtmlSound.audios[url] == null) {
                 array = HtmlSound.audios[url] = [];
             }

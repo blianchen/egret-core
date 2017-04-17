@@ -1,6 +1,6 @@
 //////////////////////////////////////////////////////////////////////////////////////
 //
-//  Copyright (c) 2014-2015, Egret Technology Inc.
+//  Copyright (c) 2014-present, Egret Technology.
 //  All rights reserved.
 //  Redistribution and use in source and binary forms, with or without
 //  modification, are permitted provided that the following conditions are met:
@@ -27,19 +27,66 @@
 //
 //////////////////////////////////////////////////////////////////////////////////////
 
-module egret.sys {
+namespace egret.sys {
+
+    /**
+     * @private
+     * 屏幕适配器接口，当播放器视口尺寸改变时，屏幕适配器将被用于计算当前对应的舞台显示尺寸。
+     */
+    export interface IScreenAdapter{
+
+        /**
+         * @private
+         * 计算舞台显示尺寸
+         * @param scaleMode 当前的缩放模式
+         * @param screenWidth 播放器视口宽度
+         * @param screenHeight 播放器视口高度
+         * @param contentWidth 初始化内容宽度
+         * @param contentHeight 初始化内容高度
+         */
+        calculateStageSize(scaleMode:string,screenWidth:number,screenHeight:number,
+                           contentWidth:number, contentHeight:number):StageDisplaySize;
+    }
+
+    /**
+     * @private
+     * 舞台显示尺寸数据
+     */
+    export interface StageDisplaySize{
+
+        /**
+         * @private
+         * 舞台宽度
+         */
+        stageWidth:number;
+        /**
+         * @private
+         * 舞台高度
+         */
+        stageHeight:number;
+        /**
+         * @private
+         * 显示宽度，若跟舞台宽度不同，将会产生缩放。
+         */
+        displayWidth:number;
+        /**
+         * @private
+         * 显示高度，若跟舞台高度不同，将会产生缩放。
+         */
+        displayHeight:number;
+    }
 
     /**
      * @private
      * 屏幕适配器实例，开发者可以通过给这个变量赋值实现了IScreenAdapter接口的实例，从而注入自定义的屏幕适配器。
      */
-    export var screenAdapter:IScreenAdapter;
+    export let screenAdapter:IScreenAdapter;
 
     /**
      * @private
      * 屏幕适配器默认实现，开发者可以实现自定义规则的屏幕适配器。并在初始化加载时将适配器的实例赋值给egret.sys.screenAdapter上，从而替换掉默认适配器。
      */
-    export class ScreenAdapter extends HashObject implements IScreenAdapter {
+    export class DefaultScreenAdapter extends HashObject implements IScreenAdapter {
 
         /**
          * @private
@@ -59,12 +106,12 @@ module egret.sys {
          */
         public calculateStageSize(scaleMode:string, screenWidth:number, screenHeight:number,
                                   contentWidth:number, contentHeight:number):StageDisplaySize {
-            var displayWidth = screenWidth;
-            var displayHeight = screenHeight;
-            var stageWidth = contentWidth;
-            var stageHeight = contentHeight;
-            var scaleX = (screenWidth / stageWidth) || 0;
-            var scaleY = (screenHeight / stageHeight) || 0;
+            let displayWidth = screenWidth;
+            let displayHeight = screenHeight;
+            let stageWidth = contentWidth;
+            let stageHeight = contentHeight;
+            let scaleX = (screenWidth / stageWidth) || 0;
+            let scaleY = (screenHeight / stageHeight) || 0;
             switch (scaleMode) {
                 case StageScaleMode.EXACT_FIT:
                     break;
@@ -110,6 +157,19 @@ module egret.sys {
                     stageWidth = screenWidth;
                     stageHeight = screenHeight;
                     break;
+            }
+            //宽高不是2的整数倍会导致图片绘制出现问题
+            if (stageWidth % 2 != 0) {
+                stageWidth += 1;
+            }
+            if (stageHeight % 2 != 0) {
+                stageHeight += 1;
+            }
+            if(displayWidth % 2 != 0) {
+                displayWidth += 1;
+            }
+            if(displayHeight % 2 != 0) {
+                displayHeight += 1;
             }
             return {
                 stageWidth: stageWidth,

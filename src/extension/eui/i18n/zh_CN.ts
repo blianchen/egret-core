@@ -1,6 +1,6 @@
 //////////////////////////////////////////////////////////////////////////////////////
 //
-//  Copyright (c) 2014-2015; Egret Technology Inc.
+//  Copyright (c) 2014-present; Egret Technology.
 //  All rights reserved.
 //  Redistribution and use in source and binary forms; with or without
 //  modification; are permitted provided that the following conditions are met:
@@ -27,11 +27,11 @@
 //
 //////////////////////////////////////////////////////////////////////////////////////
 
-module eui {
+namespace eui {
 
     egret.$locale_strings = egret.$locale_strings || {};
     egret.$locale_strings["zh_CN"] = egret.$locale_strings["zh_CN"] || {};
-    var locale_strings = egret.$locale_strings["zh_CN"];
+    let locale_strings = egret.$locale_strings["zh_CN"];
 
     //2000-2999
     //EXML报错信息
@@ -55,12 +55,14 @@ module eui {
     locale_strings[2018] = "EXML解析错误 {0}: 节点上'skinName'属性值的格式错误:{1}";
     locale_strings[2019] = "EXML解析错误 {0}: 容器的子项必须是可视节点:{1}";
     locale_strings[2020] = "EXML解析错误 {0}: 在w:Declarations内的子节点，不允许使用includeIn和excludeFrom属性\n{1}";
+    locale_strings[2021] = "{0} 中存在编译错误，属性名 : {1}，属性值 : {2}";
+    locale_strings[2022] = "EXML解析错误: id `{0}` 中含有非法字符";
 
     //EXML警告信息
     locale_strings[2101] = "EXML解析警告: 在EXML根节点上声明的 class 属性: {0} 注册失败，所对应的类已经存在，请尝试重命名要注册的类名。\n{1}";
     locale_strings[2102] = "EXML解析警告 {0}: 在属性节点上找不到任何子节点\n{1}";
     locale_strings[2103] = "EXML解析警告 {0}: 节点上的同一个属性'{1}'被多次赋值\n{2}";
-    locale_strings[2104] = "无法实例化组件：{0} ，请检查该组件构造函数参数是否为空。";
+    locale_strings[2104] = "EXML解析警告，无法直接实例化自定义组件：{0} ，在EXML中使用的自定义组件必须要能直接被实例化，否则可能导致后续EXML解析报错。";
 
     //EUI 报错与警告信息
     locale_strings[2201] = "BasicLayout 不支持虚拟化。";

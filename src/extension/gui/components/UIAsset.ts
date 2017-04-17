@@ -1,6 +1,6 @@
 //////////////////////////////////////////////////////////////////////////////////////
 //
-//  Copyright (c) 2014-2015, Egret Technology Inc.
+//  Copyright (c) 2014-present, Egret Technology.
 //  All rights reserved.
 //  Redistribution and use in source and binary forms, with or without
 //  modification, are permitted provided that the following conditions are met:
@@ -28,7 +28,7 @@
 //////////////////////////////////////////////////////////////////////////////////////
 
 
-module egret.gui {
+namespace egret.gui {
 
 	/**
 	 * @class egret.gui.UIAsset
@@ -49,8 +49,7 @@ module egret.gui {
             if(source){
                 this.source = source;
             }
-			this.$renderRegion = new sys.Region();
-
+			this.$renderNode = new sys.BitmapNode();
             this.autoScale = autoScale;
 		}
 
@@ -128,7 +127,7 @@ module egret.gui {
 		 */		
 		private parseSource():void{
 			this.sourceChanged = false;
-			var adapter:IAssetAdapter = UIAsset.assetAdapter;
+			let adapter:IAssetAdapter = UIAsset.assetAdapter;
 			if(!adapter){
                 adapter = this.getAdapter();
 			}
@@ -136,7 +135,7 @@ module egret.gui {
 				this.contentChanged(null,null);
 			}
 			else{
-				var reuseContent:DisplayObject = this.contentReused?null:this._content;
+				let reuseContent:DisplayObject = this.contentReused?null:this._content;
 				this.contentReused = true;
 				adapter.getAsset(this._source,this.contentChanged,this,reuseContent);
 			}
@@ -145,7 +144,7 @@ module egret.gui {
          * 获取资源适配器
          */
         private getAdapter():IAssetAdapter{
-            var adapter:IAssetAdapter;
+            let adapter:IAssetAdapter;
             try{
                 adapter = $getAdapter("egret.gui.IAssetAdapter");
             }
@@ -161,7 +160,7 @@ module egret.gui {
 		private contentChanged(content:any,source:any):void{
 			if(source!==this._source)
 				return;
-            var oldContent:any = this._content;
+            let oldContent:any = this._content;
             this._content = content;
             if(this._content instanceof Texture){
 				this._contentIsTexture = true;
@@ -196,15 +195,15 @@ module egret.gui {
 		 */
 		public measure():void{
 			super.measure();
-            var content:any = this._content;
+            let content:any = this._content;
 			if(content instanceof DisplayObject){
                 if("preferredWidth" in content){
                     this.measuredWidth = (<ILayoutElement><any> (content)).preferredWidth;
                     this.measuredHeight = (<ILayoutElement><any> (content)).preferredHeight;
                 }
                 else{
-					var oldW:number = content.explicitWidth;
-					var oldH:number = content.explicitHeight;
+					let oldW:number = (<any>content).explicitWidth;
+					let oldH:number = (<any>content).explicitHeight;
 					content.width = NaN;
 					content.height = NaN;
                     this.measuredWidth = content.measuredWidth*content.scaleX;
@@ -229,7 +228,7 @@ module egret.gui {
 		 */
 		public updateDisplayList(unscaledWidth:number, unscaledHeight:number):void{
 			super.updateDisplayList(unscaledWidth,unscaledHeight);
-            var content:any = this._content;
+            let content:any = this._content;
 			if(this.autoScale&&content instanceof DisplayObject){
 				if("setLayoutBoundsSize" in content){
                     (<ILayoutElement><any> (content)).setLayoutBoundsSize(unscaledWidth,unscaledHeight);
@@ -247,16 +246,16 @@ module egret.gui {
 		 */
 		$smoothing:boolean;
 		/**
-		 * @language en_US
 		 * Whether or not the bitmap is smoothed when scaled.
 		 * @version Egret 2.4
 		 * @platform Web
+		 * @language en_US
 		 */
 		/**
-		 * @language zh_CN
 		 * 控制在缩放时是否对位图进行平滑处理。
 		 * @version Egret 2.4
 		 * @platform Web
+		 * @language zh_CN
 		 */
 		public get smoothing():boolean {
 			return this.$smoothing;
@@ -274,12 +273,11 @@ module egret.gui {
 		/**
 		 * @private
 		 */
-		$render(context:sys.RenderContext):void{
+		$render():void{
 			if (this._contentIsTexture) {
-				var bitmapData = <Texture> this._content;
-				context.imageSmoothingEnabled = this.$smoothing;
-				var destW:number;
-				var destH:number;
+				let bitmapData = <Texture> this._content;
+				let destW:number;
+				let destH:number;
 				if(this.autoScale){
 					destW = this._UIC_Props_._uiWidth;
 					destH = this._UIC_Props_._uiHeight;
@@ -289,33 +287,20 @@ module egret.gui {
 					destH = bitmapData.$getTextureHeight();
 				}
 
-                Bitmap.$drawImage(context, bitmapData._bitmapData,
+                 sys.BitmapNode.$updateTextureData(<sys.BitmapNode>this.$renderNode, bitmapData._bitmapData,
                     bitmapData._bitmapX, bitmapData._bitmapY, bitmapData._bitmapWidth, bitmapData._bitmapHeight, bitmapData._offsetX, bitmapData._offsetY, bitmapData.$getTextureWidth(), bitmapData.$getTextureHeight(),
-                    destW, destH, this.scale9Grid || bitmapData["scale9Grid"], this.fillMode, this.$smoothing);
-
-				//var offsetX:number = Math.round(bitmapData._offsetX);
-				//var offsetY:number = Math.round(bitmapData._offsetY);
-				//var bitmapWidth:number = bitmapData._bitmapWidth || bitmapData._textureWidth;
-				//var bitmapHeight:number = bitmapData._bitmapHeight || bitmapData._textureHeight;
-				//var scale9Grid = this.scale9Grid || bitmapData["scale9Grid"];
-				//if (scale9Grid ) {
-				//	Bitmap.$drawScale9GridImage(context, bitmapData, scale9Grid, destW, destH);
-				//}
-				//else {
-				//	context.drawImage(bitmapData._bitmapData, bitmapData._bitmapX, bitmapData._bitmapY,
-				//		bitmapWidth, bitmapHeight, offsetX, offsetY, destW, destH);
-				//}
+                    destW, destH, bitmapData._sourceWidth, bitmapData._sourceHeight, this.scale9Grid || bitmapData["scale9Grid"], this.fillMode, this.$smoothing);
 			}
-			super.$render(context);
+			super.$render();
 		}
 		/**
 		 * @private
 		 */
 		$measureContentBounds(bounds:Rectangle):void {
 			if(this._contentIsTexture){
-				var texture:Texture = <Texture> this._content;
-				var w = NaN;
-				var h = NaN;
+				let texture:Texture = <Texture> this._content;
+				let w = NaN;
+				let h = NaN;
 				if(this.autoScale){
 					w = this._UIC_Props_._uiWidth == 10000 ? this.$getExplicitWidth() : this._UIC_Props_._uiWidth;
 					h = this._UIC_Props_._uiHeight == 10000 ? this.$getExplicitHeight() : this._UIC_Props_._uiHeight;
